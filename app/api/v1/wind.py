@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app import crud, schemas
+from app.crud import wind_turbine_crud
 from app.schemas import wind_turbine
 
 router = APIRouter(prefix="/wind_turbines")
@@ -9,17 +9,21 @@ router = APIRouter(prefix="/wind_turbines")
 
 @router.get("/", response_model=list[wind_turbine.WindTurbine])
 async def list_turbines(db: AsyncSession = Depends(get_db)):
-    return await crud.wind_turbine.get_all(db)
+    return await wind_turbine_crud.get_all(db)
 
+
+@router.get("/all-data", response_model=list[wind_turbine.WindTurbineData])
+async def list_turbines(db: AsyncSession = Depends(get_db)):
+    return await wind_turbine_crud.get_all_data(db)
 
 @router.post("/", response_model=wind_turbine.WindTurbine)
 async def create_turbine(turbine_in: wind_turbine.WindTurbineCreate, db: AsyncSession = Depends(get_db)):
-    return await crud.wind_turbine.create(db, turbine_in)
+    return await wind_turbine_crud.create(db, turbine_in)
 
 
 @router.put("/{turbine_id}", response_model=wind_turbine.WindTurbine)
 async def update_turbine(turbine_id: int, turbine_in: wind_turbine.WindTurbineUpdate, db: AsyncSession = Depends(get_db)):
-    turbine = await crud.wind_turbine.update(db, turbine_id, turbine_in)
+    turbine = await wind_turbine_crud.update(db, turbine_id, turbine_in)
     if not turbine:
         raise HTTPException(status_code=404, detail="Turbine not found")
     return turbine
@@ -27,7 +31,7 @@ async def update_turbine(turbine_id: int, turbine_in: wind_turbine.WindTurbineUp
 
 @router.delete("/{turbine_id}")
 async def delete_turbine(turbine_id: int, db: AsyncSession = Depends(get_db)):
-    turbine = await crud.wind_turbine.delete(db, turbine_id)
+    turbine = await wind_turbine_crud.delete(db, turbine_id)
     if not turbine:
         raise HTTPException(status_code=404, detail="Turbine not found")
     return {"deleted": True, "id": turbine_id}

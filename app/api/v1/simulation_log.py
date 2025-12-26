@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.crud.simulation_log import get_all_logs
-from app.schemas.simulation_log import SimulationLogOut
+from app.schemas.simulation_log_schemas import SimulationLogOut
 
 router = APIRouter()
 

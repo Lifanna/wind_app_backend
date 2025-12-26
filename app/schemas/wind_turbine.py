@@ -23,4 +23,19 @@ class WindTurbine(WindTurbineBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+        
+    
+class WindTurbineData(BaseModel):
+    timestamp: datetime
+    wind_speed_ref: float
+    wind_speed: float
+    power_raw_W: float
+    power_curve_W: float
+    power_ac_W: float
+    rho: float
+    rotor_diameter_m: float
+    rated_power_W: float
+
+    class Config:
+        from_attributes = True    

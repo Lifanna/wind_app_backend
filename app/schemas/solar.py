@@ -1,35 +1,32 @@
-from pydantic import BaseModel
+# app/schemas/solar.py
+
+from typing import Optional, List
 from datetime import datetime
-from typing import Optional
+from pydantic import BaseModel
 
 
+# Базовая схема для SolarSystem
 class SolarSystemBase(BaseModel):
-    name: Optional[str] = "Default Solar System"
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    timezone: Optional[str] = None
-    tilt: Optional[float] = None
-    azimuth: Optional[float] = None
-    target_kw: Optional[float] = None
-    module_power_stc: Optional[float] = None
-    albedo: Optional[float] = None
+    name: Optional[str] = None
+    power_kw: Optional[float] = None
+    efficiency: Optional[float] = None
+    status: Optional[str] = None
 
 
+# Создание
 class SolarSystemCreate(SolarSystemBase):
-    name: str
+    pass # можно сделать обязательным при создании
 
 
+# Обновление (все поля опциональны)
 class SolarSystemUpdate(SolarSystemBase):
     pass
 
 
-class SolarSystemInDBBase(SolarSystemBase):
+# Ответ (с данными из БД)
+class SolarSystem(SolarSystemBase):
     id: int
     created_at: datetime
 
     class Config:
-        orm_mode = True
-
-
-class SolarSystem(SolarSystemInDBBase):
-    pass
+        from_attributes = True  # для SQLAlchemy 2.0 (ранее orm_mode = True)
