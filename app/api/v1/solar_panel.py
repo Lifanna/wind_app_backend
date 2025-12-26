@@ -1,11 +1,11 @@
 # app/api/v1/solar_panel.py
 
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
-from app.crud import solar_panel_crud
+from app.crud import solar_crud, solar_panel_crud
 from app.schemas.solar_panel_schemas import SolarPanel, SolarPanelCreate, SolarPanelUpdate
 
 router = APIRouter()
@@ -64,3 +64,5 @@ async def delete_panel(
     if not panel:
         raise HTTPException(status_code=404, detail="Panel not found")
     return await solar_panel_crud.delete_panel(db, panel)
+
+

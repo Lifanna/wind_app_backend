@@ -1,5 +1,5 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db
 from app.crud import solar_crud
@@ -47,3 +47,8 @@ async def delete_solar_system(id: int, db: AsyncSession = Depends(get_db)):
     if not db_obj:
         raise HTTPException(status_code=404, detail="Solar system not found")
     return await solar_crud.delete(db, db_obj)
+
+
+@router.get("/solar_forecasts/")
+async def read_solar_forecasts(system_id: Optional[int] = Query(None), db: AsyncSession = Depends(get_db)):
+    return await solar_crud.get_solar_forecasts(db, system_id=system_id)

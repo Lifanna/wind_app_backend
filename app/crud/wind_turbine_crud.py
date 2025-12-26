@@ -1,81 +1,134 @@
-from typing import List
+# app/crud/wind_crud.py
+
+from typing import List, Optional
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
-from sqlalchemy.orm import selectinload
 
-from app.models.wind_turbine_model import WindTurbine  # <-- путь к твоей модели, поправь если нужно
-from app.schemas.wind_turbine import WindTurbineCreate, WindTurbineUpdate
+from app.models.wind_data_model import WindData
+from app.models.wind_forecast_model import WindForecast
+from app.models.wind_turbine_model import WindTurbine
+from app.schemas.wind_turbine import (
+    WindTurbineCreate, WindTurbineUpdate,
+    WindDataCreate, WindDataUpdate,
+    WindForecastCreate, WindForecastUpdate,
+)
 
 
-async def get_all(db: AsyncSession) -> List[WindTurbine]:
-    """
-    Получить все ветрогенераторы
-    """
-    result = await db.execute(
-        select(WindTurbine)
-        .options(selectinload(WindTurbine.measurements))  # если нужно подгружать измерения сразу
-        .order_by(WindTurbine.id)
-    )
+# === Wind Turbine ===
+async def get_turbines(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[WindTurbine]:
+    result = await db.execute(select(WindTurbine).offset(skip).limit(limit))
     return result.scalars().all()
 
 
-async def get_all_data(db: AsyncSession) -> list:
-    """
-    Получить все данные ветровых турбин
-    """
-    result = await db.execute(
-        select(WindTurbine).order_by(WindTurbine.id)
-    )
+async def get_turbine(db: AsyncSession, turbine_id: int) -> Optional[WindTurbine]:
+    result = await db.execute(select(WindTurbine).where(WindTurbine.id == turbine_id))
+    return result.scalars().first()
+
+
+async def create_turbine(db: AsyncSession, obj_in: WindTurbineCreate) -> WindTurbine:
+    db_obj = WindTurbine(**obj_in.model_dump())
+    db.add(db_obj)
+    await db.commit()
+    await db.refresh(db_obj)
+    return db_obj
+
+
+async def update_turbine(db: AsyncSession, db_obj: WindTurbine, obj_in: WindTurbineUpdate) -> WindTurbine:
+    update_data = obj_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_obj, field, value)
+    await db.commit()
+    await db.refresh(db_obj)
+    return db_obj
+
+
+async def delete_turbine(db: AsyncSession, db_obj: WindTurbine) -> WindTurbine:
+    await db.delete(db_obj)
+    await db.commit()
+    return db_obj
+
+
+# === Wind Data ===
+async def get_wind_data(
+    db: AsyncSession,
+    wind_turbine_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> List[WindData]:
+    query = select(WindData).order_by(WindData.created_at.desc())
+    if wind_turbine_id is not None:
+        query = query.where(WindData.wind_turbine_id == wind_turbine_id)
+    query = query.offset(skip).limit(limit)
+    result = await db.execute(query)
     return result.scalars().all()
 
-async def create(db: AsyncSession, turbine_in: WindTurbineCreate) -> WindTurbine:
-    """
-    Создать новый ветрогенератор
-    """
-    turbine = WindTurbine(
-        name=turbine_in.name,
-        power=turbine_in.power,
-        location=turbine_in.location,
-        status=turbine_in.status or "Активен",  # дефолт из схемы, но на всякий случай
-    )
-    db.add(turbine)
+
+async def get_wind_datum(db: AsyncSession, data_id: int) -> Optional[WindData]:
+    result = await db.execute(select(WindData).where(WindData.id == data_id))
+    return result.scalars().first()
+
+
+async def create_wind_data(db: AsyncSession, obj_in: WindDataCreate) -> WindData:
+    db_obj = WindData(**obj_in.model_dump())
+    db.add(db_obj)
     await db.commit()
-    await db.refresh(turbine)
-    return turbine
+    await db.refresh(db_obj)
+    return db_obj
 
 
-async def update(db: AsyncSession, turbine_id: int, turbine_in: WindTurbineUpdate) -> WindTurbine | None:
-    """
-    Обновить ветрогенератор по ID.
-    Возвращает обновлённый объект или None, если не найден.
-    """
-    # Собираем только те поля, которые переданы (exclude_unset=True)
-    update_data = turbine_in.model_dump(exclude_unset=True)
-
-    if not update_data:
-        # Если ничего не передано — просто возвращаем существующий объект (или None)
-        result = await db.execute(select(WindTurbine).where(WindTurbine.id == turbine_id))
-        return result.scalar_one_or_none()
-
-    stmt = (
-        update(WindTurbine)
-        .where(WindTurbine.id == turbine_id)
-        .values(**update_data)
-        .returning(WindTurbine)
-    )
-    result = await db.execute(stmt)
+async def update_wind_data(db: AsyncSession, db_obj: WindData, obj_in: WindDataUpdate) -> WindData:
+    update_data = obj_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_obj, field, value)
     await db.commit()
-    return result.scalar_one_or_none()
+    await db.refresh(db_obj)
+    return db_obj
 
 
-async def delete(db: AsyncSession, turbine_id: int) -> WindTurbine | None:
-    """
-    Удалить ветрогенератор по ID.
-    Возвращает удалённый объект или None, если не найден.
-    Благодаря cascade="all, delete" в модели — удалятся и связанные WindData.
-    """
-    turbine = await db.get(WindTurbine, turbine_id)
-    if turbine:
-        await db.delete(turbine)
-        await db.commit()
-    return turbine
+async def delete_wind_data(db: AsyncSession, db_obj: WindData) -> WindData:
+    await db.delete(db_obj)
+    await db.commit()
+    return db_obj
+
+
+# === Wind Forecast ===
+async def get_wind_forecasts(
+    db: AsyncSession,
+    turbine_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> List[WindForecast]:
+    query = select(WindForecast).order_by(WindForecast.target_time)
+    if turbine_id is not None:
+        query = query.where(WindForecast.turbine_id == turbine_id)
+    query = query.offset(skip).limit(limit)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+async def get_wind_forecast(db: AsyncSession, forecast_id: int) -> Optional[WindForecast]:
+    result = await db.execute(select(WindForecast).where(WindForecast.id == forecast_id))
+    return result.scalars().first()
+
+
+async def create_wind_forecast(db: AsyncSession, obj_in: WindForecastCreate) -> WindForecast:
+    db_obj = WindForecast(**obj_in.model_dump())
+    db.add(db_obj)
+    await db.commit()
+    await db.refresh(db_obj)
+    return db_obj
+
+
+async def update_wind_forecast(db: AsyncSession, db_obj: WindForecast, obj_in: WindForecastUpdate) -> WindForecast:
+    update_data = obj_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_obj, field, value)
+    await db.commit()
+    await db.refresh(db_obj)
+    return db_obj
+
+
+async def delete_wind_forecast(db: AsyncSession, db_obj: WindForecast) -> WindForecast:
+    await db.delete(db_obj)
+    await db.commit()
+    return db_obj
