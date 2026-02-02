@@ -5,7 +5,10 @@ import uvicorn
 from app.api.v1.router import router as api_router
 from app.core.config import settings
 
-app = FastAPI(title=settings.PROJECT_NAME)
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    root_path="/api"  # здесь задаём root_path для Nginx /api/
+)
 
 # === CORS ===
 app.add_middleware(
@@ -17,14 +20,13 @@ app.add_middleware(
 )
 
 # === Роуты ===
-app.include_router(api_router, prefix="/api/v1")
-
+app.include_router(api_router, prefix="/v1")  # убираем лишний /api
 
 # === Автозапуск через uvicorn ===
 if __name__ == "__main__":
     uvicorn.run(
-        "main:app",          # имя файла : объект FastAPI
+        "main:app",
         host="0.0.0.0",
         port=8000,
-        reload=True          # авто-перезапуск при изменениях (только для dev)
+        reload=True
     )
