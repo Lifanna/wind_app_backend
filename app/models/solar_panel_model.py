@@ -1,5 +1,5 @@
 # app/models/solar_panel.py
-from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.core.database import Base
@@ -16,7 +16,7 @@ class SolarPanel(Base):
     power = Column(Float, nullable=False)        # мощность панели (кВт)
     efficiency = Column(Float, nullable=False)   # КПД (%)
     status = Column(String(50), default="Активна")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, server_default=func.now())
 
     # связь с системой
     system_id = Column(Integer, ForeignKey("solar_systems.id", ondelete="CASCADE"))

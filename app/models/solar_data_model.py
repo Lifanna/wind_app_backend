@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, String
+from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.core.database import Base
@@ -16,7 +16,7 @@ class SolarData(Base):
     system_id = Column(Integer, ForeignKey("solar_systems.id", ondelete="CASCADE"), nullable=False, index=True)
     
     # Время измерения (обязательно с таймзоной для корректной работы)
-    created_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, index=True, server_default=func.now())
     
     # Иррадиация
     ghi = Column(Float, nullable=True)          # Global Horizontal Irradiance (Вт/м²)

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, func
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.core.database import Base
@@ -15,7 +15,7 @@ class WindTurbine(Base):
     power = Column(Float, nullable=False)  # номинальная мощность (кВт)
     location = Column(String(255), nullable=True)
     status = Column(String(50), default="Активен")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, server_default=func.now())
 
     # связь с измерениями
     measurements = relationship("WindData", back_populates="turbine", cascade="all, delete")

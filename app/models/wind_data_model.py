@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, String
+from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -24,7 +24,7 @@ class WindData(Base):
     rotor_diameter_m = Column(Float, nullable=False)
     rated_power_W = Column(Float, nullable=False)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, server_default=func.now())
 
     # Обратная связь с ветрогенератором
     turbine = relationship("WindTurbine", back_populates="measurements")

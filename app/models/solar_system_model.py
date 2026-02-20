@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, DateTime
+from sqlalchemy import Column, Integer, Float, String, DateTime, func
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.core.database import Base
@@ -15,7 +15,7 @@ class SolarSystem(Base):
     efficiency = Column(Float, nullable=True)         # КПД (%)
     status = Column(String(32), nullable=True)        # Статус
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, server_default=func.now())
 
     measurements = relationship("SolarData", back_populates="system", cascade="all, delete")
     forecasts = relationship("SolarForecast", back_populates="system", cascade="all, delete")
